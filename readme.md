@@ -1,6 +1,14 @@
 ## Dynamic - Open Source Dynamic Building Energy Model
 
-This work is all open source - under GPL.
+An open source simple RC dynamic building energy model. Combine input power, temperature and solar data from monitoring with a simple RC model to estimate the heat loss rate of the building.
+
+Repository also contains direct heating and heatpump simulation example.
+
+This work is all open source - under GNU Affero General Public License
+Part of the OpenEnergyMonitor project:
+[http://openenergymonitor.org](http://openenergymonitor.org)
+
+![dynamicmodel.png](files/dynamicmodel.png)
 
 ### Documentation
 
@@ -14,4 +22,4 @@ A multi-stage dynamic RC type model of a building appears to give a good fit to 
 
 ### Spreadsheet version of dynamic model
 
-See: dynamic_model.ods
+See: [dynamic_model.ods](files/dynamic_model.ods)
