@@ -30,17 +30,17 @@ class Dynamic
 
           if (!$row)
           {
-              $this->mysqli->query("INSERT INTO data (`userid`, `building`, `data`) VALUES ('$userid','$building','$data')");
+              $this->mysqli->query("INSERT INTO dynamic (`userid`, `building`, `data`) VALUES ('$userid','$building','$data')");
           }
           else
           {
               $this->mysqli->query("UPDATE dynamic SET `data` = '$data' WHERE `userid` = '$userid' AND `building` = '$building'");
           }
-          return true;
+          return array('success'=>true);
         }
         else
         {
-          return false;
+          return array('success'=>false);
         }
     }
     

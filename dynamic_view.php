@@ -132,10 +132,10 @@
   var $graph_bound = $('#graph_bound');
   var $graph = $('#graph').width($graph_bound.width()).height($('#graph_bound').height());
 
-  var power_feed_data = feed.get_data(settings.powerfeed,start,end,0);
-  var solar_feed_data = feed.get_data(settings.solarfeed,start,end,0);
-  var external_feed_data = feed.get_data(settings.externalfeed,start,end,0);
-  var internal_feed_data = feed.get_data(settings.internalfeed,start,end,0);
+  var power_feed_data = feed.get_data(settings.powerfeed,start,end,800);
+  var solar_feed_data = feed.get_data(settings.solarfeed,start,end,800);
+  var external_feed_data = feed.get_data(settings.externalfeed,start,end,800);
+  var internal_feed_data = feed.get_data(settings.internalfeed,start,end,800);
   
   var segment_config_html = "";
     
@@ -263,7 +263,7 @@
     
     for (i in settings.otherfeeds)
     {
-      var data = feed.get_data(settings.otherfeeds[i],start,end,0);
+      var data = feed.get_data(settings.otherfeeds[i],start,end,800);
       feeds.push({data: data, lines: { show: true, fill: false, lineWidth:linewidth}, color: "rgba(255,0,0,0.3)"});
     }
     
@@ -378,10 +378,10 @@
     settings.timewindow = $("#timewindow").val()*3600000;
     start = +new Date - settings.timewindow;	// Get start time
     
-    power_feed_data = feed.get_data(settings.powerfeed,start,end,0);
-    solar_feed_data = feed.get_data(settings.solarfeed,start,end,0);
-    external_feed_data = feed.get_data(settings.externalfeed,start,end,0);
-    internal_feed_data = feed.get_data(settings.internalfeed,start,end,0);
+    power_feed_data = feed.get_data(settings.powerfeed,start,end,800);
+    solar_feed_data = feed.get_data(settings.solarfeed,start,end,800);
+    external_feed_data = feed.get_data(settings.externalfeed,start,end,800);
+    internal_feed_data = feed.get_data(settings.internalfeed,start,end,800);
   
     simulate();
   });
@@ -399,7 +399,7 @@
     if (feedlist[z].id!=settings.externalfeed) 
     { 
       settings.externalfeed = feedlist[z].id;
-      external_feed_data = feed.get_data(settings.externalfeed,start,end,0);
+      external_feed_data = feed.get_data(settings.externalfeed,start,end,800);
       simulate();
     }
   });
@@ -409,7 +409,7 @@
     if (feedlist[z].id!=settings.powerfeed) 
     { 
       settings.powerfeed = feedlist[z].id;
-      power_feed_data = feed.get_data(settings.powerfeed,start,end,0);
+      power_feed_data = feed.get_data(settings.powerfeed,start,end,800);
       simulate();
     }
   });
@@ -419,7 +419,7 @@
     if (feedlist[z].id!=settings.solarfeed) 
     { 
       settings.solarfeed = feedlist[z].id;
-      solar_feed_data = feed.get_data(settings.solarfeed,start,end,0);
+      solar_feed_data = feed.get_data(settings.solarfeed,start,end,800);
       simulate();
     }
   });
@@ -429,7 +429,7 @@
     if (feedlist[z].id!=settings.internalfeed) 
     { 
       settings.internalfeed = feedlist[z].id;
-      internal_feed_data = feed.get_data(settings.internalfeed,start,end,0);
+      internal_feed_data = feed.get_data(settings.internalfeed,start,end,800);
       simulate();
     }
   });

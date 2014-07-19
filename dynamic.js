@@ -11,7 +11,7 @@ var dynamic = {
   'save':function(building,data)
   {
     var result = {};
-    $.ajax({ url: path+"dynamic/save.json", data: "building="+building+"&data="+JSON.stringify(data), async: true, success: function(data){} });
+    $.ajax({ url: path+"dynamic/save.json", data: "building="+building+"&data="+JSON.stringify(data), async: true, success: function(data){result = data;} });
     return result;
   },
 }
