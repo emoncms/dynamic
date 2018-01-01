@@ -9,16 +9,8 @@
 <script language="javascript" type="text/javascript" src="<?php echo $path; ?>Lib/flot/jquery.flot.selection.min.js"></script>
 
 <script language="javascript" type="text/javascript" src="<?php echo $path; ?>Modules/feed/feed.js"></script>
-
-<ul class="nav nav-pills">
-  <li cass="active">
-    <a href="#">Dynamic Coheating</a>
-  </li>
-  <li>
-  <a href="<?php echo $path; ?>dynamic/heatingexplorer" >Heating Explorer</a>
-  </li>
-</ul>
-
+<script type="text/javascript" src="<?php echo $path; ?>Modules/dynamic/vis.helper.js"></script>
+<br>
 <h1>Dynamic Coheating</h1>
 <p>The black line is simulated internal temperature based on properties defined below.</p>
 <p>The gray line is internal temperature prediction 4h +</p>
@@ -92,8 +84,7 @@
   var path = "<?php echo $path; ?>";
   var apikey = "";
   
-  var building = <?php echo $building; ?>;
-  var settings = dynamic.get(building);
+  var settings = dynamic.get();
   
   if (settings==0)
   {
@@ -106,7 +97,7 @@
       
       otherfeeds: [],
       
-      solarfactor: 0.6,
+      solarfactor: 0.1,
       solaroffset: 1,
       
       segments: [
@@ -125,17 +116,22 @@
   //var start = +1378638900000 - settings.timewindow;	// Get start time
   //var end = +1378638900000 +1000*1000;				        // Get end time
   
-  var timeWindow = (3600000*24.0*0.7);	//Initial time window
-  var start = +new Date - timeWindow;	//Get start time
-  var end = +new Date;				    //Get end time
+  var timeWindow = (3600000*24.0*7);	//Initial time window
+  view.start = +new Date - timeWindow;	//Get start time
+  view.end = +new Date;				    //Get end time
+  var skipmissing = 0;
+  var limitinterval = 0;
+  
   
   var $graph_bound = $('#graph_bound');
   var $graph = $('#graph').width($graph_bound.width()).height($('#graph_bound').height());
 
-  var power_feed_data = feed.get_data(settings.powerfeed,start,end,800);
-  var solar_feed_data = feed.get_data(settings.solarfeed,start,end,800);
-  var external_feed_data = feed.get_data(settings.externalfeed,start,end,800);
-  var internal_feed_data = feed.get_data(settings.internalfeed,start,end,800);
+  
+  view.calc_interval();
+  var power_feed_data = feed.get_data(settings.powerfeed,view.start,view.end,view.interval,skipmissing,limitinterval);
+  var solar_feed_data = feed.get_data(settings.solarfeed,view.start,view.end,view.interval,skipmissing,limitinterval);
+  var external_feed_data = feed.get_data(settings.externalfeed,view.start,view.end,view.interval,skipmissing,limitinterval);
+  var internal_feed_data = feed.get_data(settings.internalfeed,view.start,view.end,view.interval,skipmissing,limitinterval);
   
   var segment_config_html = "";
     
@@ -178,47 +174,29 @@
     
     var sim = [];
     
+    var outside = 0;
+    var heatinput = 0;
+    var solar = 0;
+    var ref = 0;
+    
+    var outside_data = [];
+    var heatinput_data = [];
+    var solar_data = [];
+    var ref_data = [];
+    
     var error = 0;
     for (var z=1; z<external_feed_data.length; z++)
     {
       var lasttime = external_feed_data[z-1][0];
       var time = external_feed_data[z][0];
-      var outside = external_feed_data[z][1];
-      
       var step = (time - lasttime) / 1000.0;
-
-      // Not all feeds share the same timestamp and interval rate and so we need to use
-      // binary search to locate closest power datapoint to the external temperature 
-      // datapoint which we are using as our base time.
-      // The external temperature is recorded every 60s while power is recorded every 10s
-      // we use binary search to find the power value every 60 seconds
       
-      var spos = 0, epos = power_feed_data.length-1, mid = 0;
-      for (var n=0; n<20; n++) {
-        mid = spos + Math.round((epos - spos ) / 2);
-        if (power_feed_data[mid][0] > time) epos = mid; else spos = mid;
-      }
-      heatinput = power_feed_data[mid][1];
+      if (external_feed_data[z][1]!=null) outside = external_feed_data[z][1];
+      if (power_feed_data[z][1]!=null) heatinput = power_feed_data[z][1];
+      if (solar_feed_data[z][1]!=null) solar = (settings.solarfactor * solar_feed_data[z][1]) + settings.solaroffset;
+      if (internal_feed_data[z][1]!=null) ref = internal_feed_data[z][1];
       
-      // Here we do the same for solar PV data
-      
-      if (settings.solarfeed>0) {
-        var spos = 0, epos = solar_feed_data.length-1, mid = 0;
-        for (var n=0; n<20; n++) {
-          mid = spos + Math.round((epos - spos ) / 2);
-          if (solar_feed_data[mid][0] > (time+3600000*settings.solaroffset)) epos = mid; else spos = mid;
-        }
-        heatinput += solar_feed_data[mid][1]*settings.solarfactor;
-      }
-      // And the same again for our internal temperature reference which we use to compare the simulated 
-      // temperature against and so calculate the average error.
-      
-      var spos = 0, epos = internal_feed_data.length-1, mid = 0;
-      for (var n=0; n<20; n++) {
-        mid = spos + Math.round((epos - spos ) / 2);
-        if (internal_feed_data[mid][0] > time) epos = mid; else spos = mid;
-      }
-      var ref = internal_feed_data[mid][1];
+      if (settings.solarfeed>0) heatinput += solar;
       
       // The following 14 lines of code is the actual simulation code
       // We calculate how much heat (in Watts) flow between the segments
@@ -238,14 +216,18 @@
       // 2) We calculate the change of energy in each segment and the new temperature
       // of each segment.
       
-      for (i in segment) 
-      {
+      for (i in segment) {
         segment[i].E += segment[i].H * step;
         segment[i].T = segment[i].E / segment[i].k;
       }
       
       // Populate the simulation plot with simulated internal temperature
       sim.push([time,segment[segment.length-1].T]);
+      
+      heatinput_data.push([time,heatinput]);
+      solar_data.push([time,solar]);
+      outside_data.push([time,outside]);
+      ref_data.push([time,ref]);
       
       // Average error calculation
       error += Math.abs(segment[segment.length-1].T - ref);
@@ -254,23 +236,23 @@
     var linewidth = 1;
     
     var feeds = [
-        {data: external_feed_data, lines: { show: true, fill: false }, color: "rgba(0,0,255,0.8)"},
-        {data: power_feed_data, yaxis: 2, lines: { show: true, fill: true, fillColor: "rgba(255,150,0,0.2)"}, color: "rgba(255,150,0,0.2)"},
-        {data: solar_feed_data, yaxis: 2, lines: { show: true, fill: false, fillColor: "rgba(255,150,0,0.2)"}, color: "rgba(255,255,0,0.2)"},
-        {data: internal_feed_data, lines: { show: true, fill: false }, color: "rgba(200,0,0,1.0)"},
+        {data: outside_data, lines: { show: true, fill: false }, color: "rgba(0,0,255,0.8)"},
+        {data: heatinput_data, yaxis: 2, lines: { show: true, fill: true, fillColor: "rgba(255,150,0,0.2)"}, color: "rgba(255,150,0,0.2)"},
+        {data: solar_data, yaxis: 2, lines: { show: true, fill: false, fillColor: "rgba(255,150,0,0.2)"}, color: "rgba(255,255,0,0.2)"},
+        {data: ref_data, lines: { show: true, fill: false }, color: "rgba(200,0,0,1.0)"},
         {data: sim, lines: { show: true, fill: false, lineWidth: 3}, color: "rgba(0,0,0,1)"}
     ];
     
     for (i in settings.otherfeeds)
     {
-      var data = feed.get_data(settings.otherfeeds[i],start,end,800);
+      var data = feed.get_data(settings.otherfeeds[i],view.start,view.end,view.interval,skipmissing,limitinterval);
       feeds.push({data: data, lines: { show: true, fill: false, lineWidth:linewidth}, color: "rgba(255,0,0,0.3)"});
     }
     
     var plot = $.plot($graph, feeds, {
-    grid: { show: true, hoverable: true, clickable: true },
-    xaxis: { mode: "time", localTimezone: true, min: start, max: end },
-    selection: { mode: "xy" }
+      grid: { show: true, hoverable: true, clickable: true },
+      xaxis: { mode: "time", localTimezone: true, min: view.start, max: view.end },
+      selection: { mode: "xy" }
     });
 
     $("#total_wk").html(total_wk.toFixed(0));
@@ -342,7 +324,7 @@
   }
   $("#power_feed").html(out);
   
-  var out = "", selected = "";
+  var out = "<option value='0'>--NO SOLAR--</option>", selected = "";
   for (z in feedlist) {
     if (feedlist[z].id==settings.solarfeed) selected = 'selected'; else selected = '';
     if (feedlist[z].datatype==1) out += "<option value='"+z+"' "+selected+">"+feedlist[z].name+"</option>";
@@ -376,12 +358,13 @@
   $("#timewindow_ok").click(function(){
   
     settings.timewindow = $("#timewindow").val()*3600000;
-    start = +new Date - settings.timewindow;	// Get start time
+    view.start = +new Date - settings.timewindow;	// Get start time
+    view.calc_interval();
     
-    power_feed_data = feed.get_data(settings.powerfeed,start,end,800);
-    solar_feed_data = feed.get_data(settings.solarfeed,start,end,800);
-    external_feed_data = feed.get_data(settings.externalfeed,start,end,800);
-    internal_feed_data = feed.get_data(settings.internalfeed,start,end,800);
+    power_feed_data = feed.get_data(settings.powerfeed,view.start,view.end,view.interval);
+    solar_feed_data = feed.get_data(settings.solarfeed,view.start,view.end,view.interval);
+    external_feed_data = feed.get_data(settings.externalfeed,view.start,view.end,view.interval);
+    internal_feed_data = feed.get_data(settings.internalfeed,view.start,view.end,view.interval);
   
     simulate();
   });
@@ -399,7 +382,7 @@
     if (feedlist[z].id!=settings.externalfeed) 
     { 
       settings.externalfeed = feedlist[z].id;
-      external_feed_data = feed.get_data(settings.externalfeed,start,end,800);
+      external_feed_data = feed.get_data(settings.externalfeed,view.start,view.end,view.interval,skipmissing,limitinterval);
       simulate();
     }
   });
@@ -409,7 +392,7 @@
     if (feedlist[z].id!=settings.powerfeed) 
     { 
       settings.powerfeed = feedlist[z].id;
-      power_feed_data = feed.get_data(settings.powerfeed,start,end,800);
+      power_feed_data = feed.get_data(settings.powerfeed,view.start,view.end,view.interval,skipmissing,limitinterval);
       simulate();
     }
   });
@@ -419,7 +402,7 @@
     if (feedlist[z].id!=settings.solarfeed) 
     { 
       settings.solarfeed = feedlist[z].id;
-      solar_feed_data = feed.get_data(settings.solarfeed,start,end,800);
+      solar_feed_data = feed.get_data(settings.solarfeed,view.start,view.end,view.interval,skipmissing,limitinterval);
       simulate();
     }
   });
@@ -429,20 +412,19 @@
     if (feedlist[z].id!=settings.internalfeed) 
     { 
       settings.internalfeed = feedlist[z].id;
-      internal_feed_data = feed.get_data(settings.internalfeed,start,end,800);
+      internal_feed_data = feed.get_data(settings.internalfeed,view.start,view.end,view.interval,skipmissing,limitinterval);
       simulate();
     }
   });
   
   $("#save").click(function(){
-    for (i in segment) 
-    {
+    for (i in segment) {
       segment[i].u = $("#u"+i).val();
       segment[i].k = $("#k"+i).val();
       segment[i].T = $("#t"+i).val();
     }
   
-    dynamic.save(building,settings); 
+    dynamic.save(settings); 
   });
 
 </script>
