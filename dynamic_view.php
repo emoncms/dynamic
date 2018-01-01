@@ -11,21 +11,33 @@
 <script language="javascript" type="text/javascript" src="<?php echo $path; ?>Modules/feed/feed.js"></script>
 <script type="text/javascript" src="<?php echo $path; ?>Modules/dynamic/vis.helper.js"></script>
 <br>
-<h1>Dynamic Coheating</h1>
-<p>The black line is simulated internal temperature based on properties defined below.</p>
-<p>The gray line is internal temperature prediction 4h +</p>
+<h2>Dynamic Coheating</h2>
 
-<div id="graph_bound" style="width:100%; height:400px; position:relative; ">
+<div id="navigation" style="float:right">
+  <button class='btn graph_time' type='button' time='1'>D</button>
+  <button class='btn graph_time' type='button' time='7'>W</button>
+  <button class='btn graph_time' type='button' time='30'>M</button>
+  <button class='btn graph_time' type='button' time='365'>Y</button>
+  <button id='graph_zoomin' class='btn'>+</button>
+  <button id='graph_zoomout' class='btn'>-</button>
+  <button id='graph_left' class='btn'><</button>
+  <button id='graph_right' class='btn'>></button>
+  <div style="clear:both"></div>
+</div>
+
+<p>The black line is simulated internal temperature based on properties defined below.</p>
+
+<div id="graph_bound" style="width:100%; height:450px; position:relative; ">
   <div id="graph"></div>
 </div>
 
 <h3>Total W/K heat loss: <span id="total_wk"> </span> W/K</h3>
-<h3>Total thermal capacity: <span id="total_thermal_capacity"></span> J/K</h3>
+<h3>Total thermal capacity: <span id="total_thermal_capacity"></span> kJ/K</h3>
 
 <h3><span id="error"></span></h3>
 
 <table class="table">
-<tr><th>Segment</th><th>W/K</th><th>Thermal capacity</th><th>Initial temperature</th></tr>
+<tr><th>Segment</th><th>W/K</th><th>Thermal capacity (kJ/K)</th><th>Initial temperature</th></tr>
 <tbody id="segment_config"></tbody>
 </table>
 <p><i>Segment 0 connects to external temperature, Segment <span class="numofsegments"></span> to heat input</i></p>
@@ -101,9 +113,9 @@
       solaroffset: 1,
       
       segments: [
-        {u:130,k:11000000,T:10},
-        {u:340,k:2500000,T:15},
-        {u:712,k:600000,T:15}
+        {u:130,k:11000,T:10},
+        {u:340,k:2500,T:15},
+        {u:712,k:600,T:15}
       ],
       
       timewindow: (3600000*24)
@@ -126,13 +138,6 @@
   var $graph_bound = $('#graph_bound');
   var $graph = $('#graph').width($graph_bound.width()).height($('#graph_bound').height());
 
-  
-  view.calc_interval();
-  var power_feed_data = feed.get_data(settings.powerfeed,view.start,view.end,view.interval,skipmissing,limitinterval);
-  var solar_feed_data = feed.get_data(settings.solarfeed,view.start,view.end,view.interval,skipmissing,limitinterval);
-  var external_feed_data = feed.get_data(settings.externalfeed,view.start,view.end,view.interval,skipmissing,limitinterval);
-  var internal_feed_data = feed.get_data(settings.internalfeed,view.start,view.end,view.interval,skipmissing,limitinterval);
-  
   var segment_config_html = "";
     
   for (i in segment) 
@@ -146,7 +151,23 @@
   $(".numofsegments").html(segment.length-1);
   $("#segment_config").html(segment_config_html);
  
+  var power_feed_data = [];
+  var solar_feed_data = [];
+  var external_feed_data = [];
+  var internal_feed_data = [];
+ 
+  load();
   simulate();  
+  
+  function load()
+  {
+    view.calc_interval();
+    power_feed_data = feed.get_data(settings.powerfeed,view.start,view.end,view.interval,skipmissing,limitinterval);
+    solar_feed_data = feed.get_data(settings.solarfeed,view.start,view.end,view.interval,skipmissing,limitinterval);
+    external_feed_data = feed.get_data(settings.externalfeed,view.start,view.end,view.interval,skipmissing,limitinterval);
+    internal_feed_data = feed.get_data(settings.internalfeed,view.start,view.end,view.interval,skipmissing,limitinterval);
+  }
+  
   
   function simulate()
   {  
@@ -163,10 +184,10 @@
         
     for (i in segment) 
     {
-      segment[i].E = segment[i].T * segment[i].k;
+      segment[i].E = segment[i].T * segment[i].k*1000;
       segment[i].H = 0;
       sum_u += 1 / segment[i].u;
-      sum_k += 1*segment[i].k
+      sum_k += 1*segment[i].k*1000
     }
     
     var total_wk = 1 / sum_u;
@@ -218,7 +239,7 @@
       
       for (i in segment) {
         segment[i].E += segment[i].H * step;
-        segment[i].T = segment[i].E / segment[i].k;
+        segment[i].T = segment[i].E / (segment[i].k*1000);
       }
       
       // Populate the simulation plot with simulated internal temperature
@@ -252,11 +273,11 @@
     var plot = $.plot($graph, feeds, {
       grid: { show: true, hoverable: true, clickable: true },
       xaxis: { mode: "time", localTimezone: true, min: view.start, max: view.end },
-      selection: { mode: "xy" }
+      selection: { mode: "x" }
     });
 
     $("#total_wk").html(total_wk.toFixed(0));
-    $("#total_thermal_capacity").html(total_thermal_capacity);
+    $("#total_thermal_capacity").html(total_thermal_capacity*0.001);
     $("#error").html("Model is within an average of: "+(error/ external_feed_data.length).toFixed(3)+"C of measured temperature");
   }
   
@@ -355,32 +376,46 @@
     simulate();
   });
   
+  // ---------------------------------------------------------------------------
+  // Graph view navigation
+  // ---------------------------------------------------------------------------
+  
   $("#timewindow_ok").click(function(){
-  
     settings.timewindow = $("#timewindow").val()*3600000;
-    view.start = +new Date - settings.timewindow;	// Get start time
-    view.calc_interval();
-    
-    power_feed_data = feed.get_data(settings.powerfeed,view.start,view.end,view.interval);
-    solar_feed_data = feed.get_data(settings.solarfeed,view.start,view.end,view.interval);
-    external_feed_data = feed.get_data(settings.externalfeed,view.start,view.end,view.interval);
-    internal_feed_data = feed.get_data(settings.internalfeed,view.start,view.end,view.interval);
-  
-    simulate();
+    view.end = +new Date
+    view.start = view.end - settings.timewindow;	// Get start time
+    load(); simulate();
   });
   
+  $("#graph_zoomout").click(function () {view.zoomout(); load(); simulate();});
+  $("#graph_zoomin").click(function () {view.zoomin(); load(); simulate();});
+  $('#graph_right').click(function () {view.panright(); load(); simulate();});
+  $('#graph_left').click(function () {view.panleft(); load(); simulate();});
+  
+  $('.graph_time').click(function () {
+      view.timewindow($(this).attr("time")); 
+      load(); simulate();
+  });
+  
+  $('#graph').bind("plotselected", function (event, ranges) {
+      view.start = ranges.xaxis.from;
+      view.end = ranges.xaxis.to;
+      load(); simulate();
+  });
+    
   $("#solar_ok").click(function(){
     settings.solarfactor = parseFloat($("#solar_scale").val());
     settings.solaroffset = parseFloat($("#solar_offset").val());
     simulate();
   });
   
+  // ---------------------------------------------------------------------------
   // feed selector controllers
+  // ---------------------------------------------------------------------------
   
   $("#external_feed").click(function(){
     var z = $(this).val();
-    if (feedlist[z].id!=settings.externalfeed) 
-    { 
+    if (feedlist[z].id!=settings.externalfeed) { 
       settings.externalfeed = feedlist[z].id;
       external_feed_data = feed.get_data(settings.externalfeed,view.start,view.end,view.interval,skipmissing,limitinterval);
       simulate();
@@ -389,8 +424,7 @@
   
   $("#power_feed").click(function(){
     var z = $(this).val();
-    if (feedlist[z].id!=settings.powerfeed) 
-    { 
+    if (feedlist[z].id!=settings.powerfeed) { 
       settings.powerfeed = feedlist[z].id;
       power_feed_data = feed.get_data(settings.powerfeed,view.start,view.end,view.interval,skipmissing,limitinterval);
       simulate();
@@ -399,8 +433,7 @@
   
   $("#solar_feed").click(function(){
     var z = $(this).val();
-    if (feedlist[z].id!=settings.solarfeed) 
-    { 
+    if (feedlist[z].id!=settings.solarfeed) { 
       settings.solarfeed = feedlist[z].id;
       solar_feed_data = feed.get_data(settings.solarfeed,view.start,view.end,view.interval,skipmissing,limitinterval);
       simulate();
@@ -409,8 +442,7 @@
   
   $("#internal_feed").click(function(){
     var z = $(this).val();
-    if (feedlist[z].id!=settings.internalfeed) 
-    { 
+    if (feedlist[z].id!=settings.internalfeed) { 
       settings.internalfeed = feedlist[z].id;
       internal_feed_data = feed.get_data(settings.internalfeed,view.start,view.end,view.interval,skipmissing,limitinterval);
       simulate();
