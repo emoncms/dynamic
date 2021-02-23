@@ -8,7 +8,7 @@
 <br>
 <h2>Dynamic Coheating</h2>
 
-<div id="graph-buttons" style="float:right">
+<div id="graph-buttons" style="float:right; margin-right:38px">
   <div class='btn-group'>
       <button class='btn graph-time' type='button' time='1'>D</button>
       <button class='btn graph-time' type='button' time='7'>W</button>
@@ -32,54 +32,68 @@
 
 <h4>Total W/K heat loss: <span id="total_wk"> </span> W/K, Total thermal capacity: <span id="total_thermal_capacity"></span> J/K, <span id="error"></span></h4>
 
-<table class="table">
-<tr><th>Segment</th><th>W/K</th><th>Thermal capacity</th><th>Initial temperature</th></tr>
-<tbody id="segment_config"></tbody>
-</table>
-<p><i>Segment 0 connects to external temperature, Segment <span class="numofsegments"></span> to heat input</i></p>
 
-<button id="add-element" class="btn">Add element</button>
-<button id="remove-element" class="btn">Remove element</button>
-<button id="simulate" class="btn">Simulate</button>
-<button id="save" class="btn">Save All</button>
-<h2>Configure</h2>
+<div style="width:50%; float:left">
+  <div style="background-color:#f0f0f0; margin:10px; padding:15px;">
+    <h4>Fabric segments</h4>
+    <table class="table">
+      <tr><th>Segment</th><th>W/K</th><th>Thermal capacity</th><th>Initial temperature <button id="auto_temp" class="btn">Auto</button></th></tr>
+      <tbody id="segment_config"></tbody>
+    </table>
+    <p><i>Segment 0 connects to external temperature, Segment <span class="numofsegments"></span> to heat input</i></p>
 
+    <button id="add-element" class="btn">Add element</button>
+    <button id="remove-element" class="btn">Remove element</button>
+    <button id="simulate" class="btn">Simulate</button>
+    <button id="save" class="btn">Save All</button>
+  </div>
+</div>
 
+<div style="width:50%; float:left">
+  <div style="background-color:#f0f0f0; margin:10px; padding:15px">
+    <h4>Feed selection</h4>
 
-<div class="input-prepend">
-  <span class="add-on" style="width:180px; text-align:right;" >External temperature feed: </span>
-  <select class="feed_selector" name="external_feed" style="width:208px"></select>
-</div><br>
+    <div class="input-prepend">
+      <span class="add-on" style="width:220px; text-align:right;" >External temperature feed: </span>
+      <select class="feed_selector" name="external_feed" style="width:208px"></select>
+    </div><br>
 
-<div class="input-prepend">
-  <span class="add-on" style="width:180px; text-align:right;" >Heating power feed: </span>
-  <select class="feed_selector" name="power_feed" style="width:208px"></select>
-</div><br>
+    <div class="input-prepend">
+      <span class="add-on" style="width:220px; text-align:right;" >Heating power feed: </span>
+      <select class="feed_selector" name="power_feed" style="width:208px"></select>
+    </div><br>
 
-<div class="input-prepend">
-  <span class="add-on" style="width:180px; text-align:right;" >Solar power feed: </span>
-  <select class="feed_selector" name="solar_feed" style="width:208px"></select>
-</div><br>
+    <div class="input-prepend">
+      <span class="add-on" style="width:220px; text-align:right;" >Lighting, Appliances & Cooking: </span>
+      <select class="feed_selector" name="lac_feed" style="width:208px"></select>
+    </div><br>
 
-<div class="input-prepend input-append">
-  <span class="add-on" style="width:90px"> scale by: </span>
-  <input id="solar_scale" type="text" style="width:65px"/>
-  <span class="add-on" style="width:90px"> offset by: </span>
-  <input id="solar_offset" type="text" style="width:65px"/>
-  <button id="solar_ok" class="btn" type="button">Ok</button>
-</div><br>
+    <div class="input-prepend">
+      <span class="add-on" style="width:220px; text-align:right;" >Solar power feed: </span>
+      <select class="feed_selector" name="solar_feed" style="width:208px"></select>
+    </div><br>
 
-<div class="input-prepend">
-  <span class="add-on" style="width:180px; text-align:right;" >Internal temperature feed: </span>
-  <select class="feed_selector" name="internal_feed" style="width:208px"></select>
-</div><br>
+    <div class="input-prepend input-append">
+      <span class="add-on" style="width:90px"> scale by: </span>
+      <input id="solar_scale" type="text" style="width:65px"/>
+      <span class="add-on" style="width:90px"> offset by: </span>
+      <input id="solar_offset" type="text" style="width:65px"/>
+      <button id="solar_ok" class="btn" type="button">Ok</button>
+    </div><br>
 
-<p>Other feeds (comma seperated feed id's):</p>
+    <div class="input-prepend">
+      <span class="add-on" style="width:180px; text-align:right;" >Internal temperature feed: </span>
+      <select class="feed_selector" name="internal_feed" style="width:208px"></select>
+    </div><br>
 
-<div class="input-append">
-<input id="other_feeds"  id="appendedInputButton" type="text" style="width:345px">
-<button id="other_feeds_ok" class="btn" type="button">Ok</button>
-</div><br>
+    <p>Other feeds (comma seperated feed id's):</p>
+
+    <div class="input-append">
+    <input id="other_feeds"  id="appendedInputButton" type="text" style="width:345px">
+    <button id="other_feeds_ok" class="btn" type="button">Ok</button>
+    </div><br>
+  </div>
+</div>
 
 <script>
   
@@ -87,10 +101,11 @@ var timeWindow = (3600000*24.0*1);	//Initial time window
 
 // Default settings
 var defaults = {
-  power_feed: 0,
-  solar_feed: 0,
-  external_feed: 0,
-  internal_feed: 0,
+  power_feed: false,
+  solar_feed: false,
+  external_feed: false,
+  internal_feed: false,
+  lac_feed: false,
   
   other_feeds: [],
   
@@ -121,7 +136,6 @@ view.npoints = 2000;
 view.calc_interval();
 
 var segment = settings.segments;
-
 var $graph_bound = $('#graph_bound');
 var $graph = $('#graph').width($graph_bound.width()).height($('#graph_bound').height());
 
@@ -129,10 +143,13 @@ var segment_config_html = "";
 for (i in segment) 
 {
   segment_config_html += "<tr><td>"+i+"</td>";
-  segment_config_html += "<td><input id='u"+i+"' type='text' value='"+segment[i].u+"'/ ></td>";
-  segment_config_html += "<td><input id='k"+i+"' type='text' value='"+segment[i].k+"'/ ></td>";
-  segment_config_html += "<td><input id='t"+i+"' type='text' value='"+segment[i].T+"'/ ></td></tr>";
+  segment_config_html += "<td><input id='u"+i+"' type='text' value='"+segment[i].u+"' style='width:100px' / ></td>";
+  segment_config_html += "<td><input id='k"+i+"' type='text' value='"+segment[i].k+"' style='width:100px' / ></td>";
+  segment_config_html += "<td><input id='t"+i+"' type='text' value='"+segment[i].T+"' style='width:100px' / ></td></tr>";
 }
+
+var initial_external_temp = false;
+var initial_internal_temp = false;
 
 $(".numofsegments").html(segment.length-1);
 $("#segment_config").html(segment_config_html);
@@ -142,11 +159,14 @@ data = {}
 load();
 
 function load() {
-    
+    initial_external_temp = false;
+    initial_internal_temp = false;
+
     data.power_feed = feed.get_data(settings.power_feed,view.start,view.end,view.interval,0,0);
     data.solar_feed = feed.get_data(settings.solar_feed,view.start,view.end,view.interval,0,0);
     data.external_feed = feed.get_data(settings.external_feed,view.start,view.end,view.interval,0,0);
     data.internal_feed = feed.get_data(settings.internal_feed,view.start,view.end,view.interval,0,0);
+    data.lac_feed = feed.get_data(settings.lac_feed,view.start,view.end,view.interval,0,0);
     simulate();
 } 
 
@@ -187,10 +207,17 @@ function simulate()
 
     if (data.external_feed[z][1]!=null) outside = data.external_feed[z][1];
     if (data.power_feed[z][1]!=null) heatinput = data.power_feed[z][1];
+    if (data.lac_feed[z][1]!=null) lac = data.lac_feed[z][1];
     if (data.solar_feed[z][1]!=null) solar = (settings.solarfactor * data.solar_feed[z][1]) + settings.solaroffset;
     if (data.internal_feed[z][1]!=null) ref = data.internal_feed[z][1];
     
+    if (initial_external_temp==false && outside!=undefined) initial_external_temp = outside;
+    if (initial_internal_temp==false && ref!=undefined) initial_internal_temp = ref;
+    
     if (settings.solarfeed>0) heatinput += solar;
+    
+    if (lac<0) lac = 0;
+    heatinput += lac
     
     // The following 14 lines of code is the actual simulation code
     // We calculate how much heat (in Watts) flow between the segments
@@ -228,6 +255,7 @@ function simulate()
   var feeds = [
       {data: data.external_feed, lines: { show: true, fill: false }, color: "rgba(0,0,255,0.8)"},
       {data: data.power_feed, yaxis: 2, lines: { show: true, fill: true, fillColor: "rgba(255,150,0,0.2)"}, color: "rgba(255,150,0,0.2)"},
+      {data: data.lac_feed, yaxis: 2, lines: { show: true, fill: true, fillColor: "rgba(255,150,0,0.2)"}, color: "rgba(255,150,0,0.2)"},
       {data: data.solar_feed, yaxis: 2, lines: { show: true, fill: false, fillColor: "rgba(255,150,0,0.2)"}, color: "rgba(255,255,0,0.2)"},
       {data: data.internal_feed, lines: { show: true, fill: false }, color: "rgba(200,0,0,1.0)"},
       {data: sim, lines: { show: true, fill: false, lineWidth: 3}, color: "rgba(0,0,0,1)"}
@@ -308,6 +336,7 @@ var feedlist = feed.list();
 $(".feed_selector[name=external_feed]").html(draw_feed_selector(settings.external_feed));
 $(".feed_selector[name=internal_feed]").html(draw_feed_selector(settings.internal_feed));
 $(".feed_selector[name=power_feed]").html(draw_feed_selector(settings.power_feed));
+$(".feed_selector[name=lac_feed]").html(draw_feed_selector(settings.lac_feed));
 $(".feed_selector[name=solar_feed]").html(draw_feed_selector(settings.solar_feed));
 $("#other_feeds").val(settings.other_feeds.join(","));
 $("#solar_scale").val(settings.solarfactor);
@@ -358,6 +387,17 @@ $("#save").click(function(){
   settings.end = view.end
   localStorage.setItem("dynamicmodel",JSON.stringify(settings));
   
+});
+
+$("#auto_temp").click(function(){
+
+  for (var i=0; i<segment.length; i++) {
+      let segment_temp = initial_internal_temp * (1.0 - (0.11*(segment.length-1-i)))
+  
+      $("#t"+i).val((segment_temp).toFixed(1));
+  }
+  
+  simulate();
 });
 
 function draw_feed_selector(selected_feed) {
