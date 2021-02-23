@@ -8,7 +8,7 @@ This work is all open source - under GNU Affero General Public License
 Part of the OpenEnergyMonitor project:
 [http://openenergymonitor.org](http://openenergymonitor.org)
 
-![dynamicmodel.png](files/dynamicmodel.png)
+![dynamicmodel.png](files/dynamic_updated.png)
 
 ### Documentation
 
