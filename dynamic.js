@@ -13,6 +13,8 @@ var defaults = {
   solarfactor: 0.6,
   solaroffset: 1,
   
+  metabolic: 0,
+  
   segments: [
     {u:130,k:11000000,T:10},
     {u:340,k:2500000,T:15},
@@ -66,6 +68,7 @@ $(".feed_selector[name=solar_feed]").html(draw_feed_selector(settings.solar_feed
 $("#other_feeds").val(settings.other_feeds.join(","));
 $("#solar_scale").val(settings.solarfactor);
 $("#solar_offset").val(settings.solaroffset);
+$("#metabolic").val(settings.metabolic);
 
 data = {}
 load();
@@ -137,6 +140,8 @@ function simulate()
     
     if (lac<0) lac = 0;
     heatinput += lac
+
+    heatinput += settings.metabolic
     
     // The following 14 lines of code is the actual simulation code
     // We calculate how much heat (in Watts) flow between the segments
@@ -272,6 +277,11 @@ $("#other_feeds_ok").click(function(){
 $("#solar_ok").click(function(){
   settings.solarfactor = parseFloat($("#solar_scale").val());
   settings.solaroffset = parseFloat($("#solar_offset").val());
+  simulate();
+});
+
+$("#metabolic_ok").click(function(){
+  settings.metabolic = parseFloat($("#metabolic").val());
   simulate();
 });
 
