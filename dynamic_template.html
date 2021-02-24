@@ -1,0 +1,118 @@
+<style>
+.grid-container {
+  display: grid;
+  grid-template-columns: 33.33% 33.33% 33.33%;
+  grid-gap: 10px 10px;
+  margin-right:10px;
+}
+.grid-item {
+  background-color: #f0f0f0;
+  padding: 20px;
+  text-align: left;
+}
+.segments {
+  grid-column: 2 / span 2;
+}
+
+@media (max-width: 1000px) {
+  .grid-container {
+    grid-template-columns: auto;
+  }  
+  .segments { grid-column:unset; }
+}
+</style>
+
+<br>
+<h2>Dynamic Coheating</h2>
+
+<div id="graph-buttons" style="float:right; margin-right:38px">
+  <div class='btn-group'>
+      <button class='btn graph-time' type='button' time='1'>D</button>
+      <button class='btn graph-time' type='button' time='7'>W</button>
+      <button class='btn graph-time' type='button' time='30'>M</button>
+      <button class='btn graph-time' type='button' time='365'>Y</button>
+  </div>
+
+  <div class='btn-group' id='graph-navbar'>
+      <button class='btn graph-nav' id='zoomin'>+</button>
+      <button class='btn graph-nav' id='zoomout'>-</button>
+      <button class='btn graph-nav' id='left'><</button>
+      <button class='btn graph-nav' id='right'>></button>
+  </div>
+</div>
+
+<p>The black line is simulated internal temperature based on properties defined below.</p>
+
+<div id="graph_bound" style="height:400px; width:100%; position:relative; ">
+    <div id="graph"></div>
+</div>  
+
+<div class="grid-container">
+  <div class="grid-item">
+    <b>Total heat loss:</b> <span id="total_wk"></span> W/K
+  </div>
+  <div class="grid-item">
+    <b>Total thermal capacity:</b> <span id="total_thermal_capacity"></span> J/K
+  </div>
+  <div class="grid-item">
+    <div id="error"></div>
+  </div>
+
+  <div class="grid-item">
+    <h4>Feed selection</h4>
+
+    <div class="input-prepend">
+      <span class="add-on" style="width:220px; text-align:right;" >External temperature feed: </span>
+      <select class="feed_selector" name="external_feed" style="width:208px"></select>
+    </div><br>
+
+    <div class="input-prepend">
+      <span class="add-on" style="width:220px; text-align:right;" >Heating power feed: </span>
+      <select class="feed_selector" name="power_feed" style="width:208px"></select>
+    </div><br>
+
+    <div class="input-prepend">
+      <span class="add-on" style="width:220px; text-align:right;" >Lighting, Appliances & Cooking: </span>
+      <select class="feed_selector" name="lac_feed" style="width:208px"></select>
+    </div><br>
+
+    <div class="input-prepend">
+      <span class="add-on" style="width:220px; text-align:right;" >Solar power feed: </span>
+      <select class="feed_selector" name="solar_feed" style="width:208px"></select>
+    </div><br>
+
+    <div class="input-prepend input-append">
+      <span class="add-on" style="width:90px"> scale by: </span>
+      <input id="solar_scale" type="text" style="width:65px"/>
+      <span class="add-on" style="width:90px"> offset by: </span>
+      <input id="solar_offset" type="text" style="width:65px"/>
+      <button id="solar_ok" class="btn" type="button">Ok</button>
+    </div><br>
+
+    <div class="input-prepend">
+      <span class="add-on" style="width:180px; text-align:right;" >Internal temperature feed: </span>
+      <select class="feed_selector" name="internal_feed" style="width:208px"></select>
+    </div><br>
+
+    <p>Other feeds (comma seperated feed id's):</p>
+
+    <div class="input-append">
+    <input id="other_feeds"  id="appendedInputButton" type="text" style="width:345px">
+    <button id="other_feeds_ok" class="btn" type="button">Ok</button>
+    </div>
+  </div>
+  
+  <div class="grid-item segments">
+    <h4>Fabric segments</h4>
+    <table class="table">
+      <tr><th>Segment</th><th>W/K</th><th>Thermal capacity</th><th>Initial temperature <button id="auto_temp" class="btn">Auto</button></th></tr>
+      <tbody id="segment_config"></tbody>
+    </table>
+    <p><i>Segment 0 connects to external temperature, Segment <span class="numofsegments"></span> to heat input</i></p>
+
+    <button id="add-element" class="btn">Add element</button>
+    <button id="remove-element" class="btn">Remove element</button>
+    <button id="simulate" class="btn">Simulate</button>
+    <button id="save" class="btn">Save All</button>
+  </div>
+</div>
