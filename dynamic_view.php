@@ -172,6 +172,7 @@ function load() {
 
 function simulate()
 {  
+  console.log("simulate");
   for (i in segment) 
   {
     segment[i].u = $("#u"+i).val();
@@ -214,7 +215,7 @@ function simulate()
     if (initial_external_temp==false && outside!=undefined) initial_external_temp = outside;
     if (initial_internal_temp==false && ref!=undefined) initial_internal_temp = ref;
     
-    if (settings.solarfeed>0) heatinput += solar;
+    if (settings.solar_feed>0) heatinput += solar;
     
     if (lac<0) lac = 0;
     heatinput += lac
@@ -390,13 +391,10 @@ $("#save").click(function(){
 });
 
 $("#auto_temp").click(function(){
-
   for (var i=0; i<segment.length; i++) {
       let segment_temp = initial_internal_temp * (1.0 - (0.11*(segment.length-1-i)))
-  
       $("#t"+i).val((segment_temp).toFixed(1));
   }
-  
   simulate();
 });
 
