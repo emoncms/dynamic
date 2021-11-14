@@ -16,9 +16,9 @@ var defaults = {
   metabolic: 0,
   
   segments: [
-    {u:130,k:11000000,T:10},
-    {u:340,k:2500000,T:15},
-    {u:712,k:600000,T:15}
+    {u:130,k:3.00,T:10},
+    {u:340,k:0.70,T:15},
+    {u:712,k:0.17,T:15}
   ],
   
   start: +new Date - timeWindow,
@@ -42,20 +42,10 @@ var segment = settings.segments;
 var $graph_bound = $('#graph_bound');
 var $graph = $('#graph').width($graph_bound.width()).height($('#graph_bound').height());
 
-var segment_config_html = "";
-for (i in segment) 
-{
-  segment_config_html += "<tr><td>"+i+"</td>";
-  segment_config_html += "<td><input id='u"+i+"' type='text' value='"+segment[i].u+"' style='width:100px' / ></td>";
-  segment_config_html += "<td><input id='k"+i+"' type='text' value='"+segment[i].k+"' style='width:100px' / ></td>";
-  segment_config_html += "<td><input id='t"+i+"' type='text' value='"+segment[i].T+"' style='width:100px' / ></td></tr>";
-}
+draw_segment_config();
 
 var initial_external_temp = false;
 var initial_internal_temp = false;
-
-$(".numofsegments").html(segment.length-1);
-$("#segment_config").html(segment_config_html);
 
 // Load feed list from server
 var feeds = feed.list();
@@ -87,19 +77,19 @@ function load() {
     initial_external_temp = false;
     initial_internal_temp = false;
     
-    data.power_feed = feed.getdata(settings.power_feed,view.start,view.end,view.interval);
+    data.power_feed = feed.getdata(settings.power_feed,view.start,view.end,view.interval,1);
     if (data.power_feed.success!=undefined) data.power_feed = []
     
-    data.solar_feed = feed.getdata(settings.solar_feed,view.start,view.end,view.interval);
+    data.solar_feed = feed.getdata(settings.solar_feed,view.start,view.end,view.interval,1);
     if (data.solar_feed.success!=undefined) data.solar_feed = []
     
-    data.external_feed = feed.getdata(settings.external_feed,view.start,view.end,view.interval);
+    data.external_feed = feed.getdata(settings.external_feed,view.start,view.end,view.interval,1);
     if (data.external_feed.success!=undefined) data.external_feed = []
     
-    data.internal_feed = feed.getdata(settings.internal_feed,view.start,view.end,view.interval);
+    data.internal_feed = feed.getdata(settings.internal_feed,view.start,view.end,view.interval,1);
     if (data.internal_feed.success!=undefined) data.internal_feed = []
     
-    data.lac_feed = feed.getdata(settings.lac_feed,view.start,view.end,view.interval);
+    data.lac_feed = feed.getdata(settings.lac_feed,view.start,view.end,view.interval,1);
     if (data.lac_feed.success!=undefined) data.lac_feed = []
     
     simulate();
@@ -111,20 +101,20 @@ function load() {
 function simulate()
 {  
   console.log("simulate");
-  for (i in segment) 
+  for (var i in segment) 
   {
-    segment[i].u = $("#u"+i).val();
-    segment[i].k = $("#k"+i).val();
-    segment[i].T = $("#t"+i).val();
+    segment[i].u = $("#u"+i).val()*1;
+    segment[i].k = $("#k"+i).val()*1;
+    segment[i].T = $("#t"+i).val()*1;
   }
   
   // INITIAL CONDITIONS  
   var sum_u = 0;
   var sum_k = 0;
       
-  for (i in segment) 
+  for (var i in segment) 
   {
-    segment[i].E = segment[i].T * segment[i].k;
+    segment[i].E = segment[i].T * (segment[i].k*3600000);
     segment[i].H = 0;
     sum_u += 1 / segment[i].u;
     sum_k += 1*segment[i].k
@@ -187,7 +177,7 @@ function simulate()
     for (i in segment) 
     {
       segment[i].E += segment[i].H * step;
-      segment[i].T = segment[i].E / segment[i].k;
+      segment[i].T = segment[i].E / (segment[i].k*3600000);
     }
     
     // Populate the simulation plot with simulated internal temperature
@@ -244,29 +234,13 @@ $('#left').click(function () {view.panleft(); load();});
 $('.graph-time').click(function () {view.timewindow($(this).attr("time")); load();});
 
 $("#simulate").click(function(){
-
-  for (i in segment) 
-  {
-    segment[i].u = $("#u"+i).val();
-    segment[i].k = $("#k"+i).val();
-    segment[i].T = $("#t"+i).val();
-  }
-
   simulate();
 });
 
 $("#add-element").click(function(){
   if (segment.length) { 
-    segment.push(segment[segment.length-1]);
-    
-    var i = segment.length-1;
-    segment_config_html = "";
-    segment_config_html += "<tr><td>"+i+"</td>";
-    segment_config_html += "<td><input id='u"+i+"' type='text' value='"+segment[i].u+"'/ ></td>";
-    segment_config_html += "<td><input id='k"+i+"' type='text' value='"+segment[i].k+"'/ ></td>";
-    segment_config_html += "<td><input id='t"+i+"' type='text' value='"+segment[i].T+"'/ ></td></tr>";
-    
-    $('#segment_config').append(segment_config_html);
+    segment.push(JSON.parse(JSON.stringify(segment[segment.length-1])));
+    draw_segment_config();
     simulate();
   }
 });
@@ -274,7 +248,7 @@ $("#add-element").click(function(){
 $("#remove-element").click(function(){
   if (segment.length>1) {
     segment.splice(segment.length-1,1);
-    $('#segment_config tr:last').remove();
+    draw_segment_config();
     simulate();
   }
 });
@@ -318,9 +292,9 @@ $(".feed_selector").change(function(){
 $("#save").click(function(){
   for (i in segment) 
   {
-    segment[i].u = $("#u"+i).val();
-    segment[i].k = $("#k"+i).val();
-    segment[i].T = $("#t"+i).val();
+    segment[i].u = $("#u"+i).val()*1;
+    segment[i].k = $("#k"+i).val()*1;
+    segment[i].T = $("#t"+i).val()*1;
   }
   
   settings.start = view.start
@@ -350,4 +324,19 @@ function draw_feed_selector(selected_feed) {
       out += "</optgroup>";
     }   
     return out;
+}
+
+function draw_segment_config()
+{
+    var segment_config_html = "";
+    for (var i in segment) 
+    {
+      segment_config_html += "<tr><td>"+i+"</td>";
+      segment_config_html += "<td><input id='u"+i+"' type='text' value='"+segment[i].u+"' style='width:100px' / ></td>";
+      segment_config_html += "<td><input id='k"+i+"' type='text' value='"+segment[i].k+"' style='width:100px' / > kWh/K</td>";
+      segment_config_html += "<td><input id='t"+i+"' type='text' value='"+segment[i].T+"' style='width:100px' / ></td></tr>";
+    }
+
+    $(".numofsegments").html(segment.length-1);
+    $("#segment_config").html(segment_config_html);
 }
