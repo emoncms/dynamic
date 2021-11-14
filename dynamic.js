@@ -80,11 +80,11 @@ function load() {
     initial_external_temp = false;
     initial_internal_temp = false;
 
-    data.power_feed = feed.get_data(settings.power_feed,view.start,view.end,view.interval,0,0);
-    data.solar_feed = feed.get_data(settings.solar_feed,view.start,view.end,view.interval,0,0);
-    data.external_feed = feed.get_data(settings.external_feed,view.start,view.end,view.interval,0,0);
-    data.internal_feed = feed.get_data(settings.internal_feed,view.start,view.end,view.interval,0,0);
-    data.lac_feed = feed.get_data(settings.lac_feed,view.start,view.end,view.interval,0,0);
+    data.power_feed = feed.getdata(settings.power_feed,view.start,view.end,view.interval);
+    data.solar_feed = feed.getdata(settings.solar_feed,view.start,view.end,view.interval);
+    data.external_feed = feed.getdata(settings.external_feed,view.start,view.end,view.interval);
+    data.internal_feed = feed.getdata(settings.internal_feed,view.start,view.end,view.interval);
+    data.lac_feed = feed.getdata(settings.lac_feed,view.start,view.end,view.interval);
     simulate();
 } 
 
@@ -187,7 +187,7 @@ function simulate()
   
   for (i in settings.other_feeds)
   {
-    var fdata = feed.get_data(settings.other_feeds[i],view.start,view.end,view.interval);
+    var fdata = feed.getdata(settings.other_feeds[i],view.start,view.end,view.interval);
     feeds.push({data: fdata, lines: { show: true, fill: false, lineWidth:linewidth}, color: "rgba(255,0,0,0.3)"});
   }
   
