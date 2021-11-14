@@ -58,7 +58,14 @@ $(".numofsegments").html(segment.length-1);
 $("#segment_config").html(segment_config_html);
 
 // Load feed list from server
-var feedlist = feed.list();
+var feeds = feed.list();
+var nodes = {};
+for (var z in feeds) {
+    var node = feeds[z].tag;
+    if (nodes[node]==undefined) nodes[node] = [];
+    nodes[node].push(feeds[z]);
+}
+
 
 $(".feed_selector[name=external_feed]").html(draw_feed_selector(settings.external_feed));
 $(".feed_selector[name=internal_feed]").html(draw_feed_selector(settings.internal_feed));
@@ -79,12 +86,22 @@ load();
 function load() {
     initial_external_temp = false;
     initial_internal_temp = false;
-
+    
     data.power_feed = feed.getdata(settings.power_feed,view.start,view.end,view.interval);
+    if (data.power_feed.success!=undefined) data.power_feed = []
+    
     data.solar_feed = feed.getdata(settings.solar_feed,view.start,view.end,view.interval);
+    if (data.solar_feed.success!=undefined) data.solar_feed = []
+    
     data.external_feed = feed.getdata(settings.external_feed,view.start,view.end,view.interval);
+    if (data.external_feed.success!=undefined) data.external_feed = []
+    
     data.internal_feed = feed.getdata(settings.internal_feed,view.start,view.end,view.interval);
+    if (data.internal_feed.success!=undefined) data.internal_feed = []
+    
     data.lac_feed = feed.getdata(settings.lac_feed,view.start,view.end,view.interval);
+    if (data.lac_feed.success!=undefined) data.lac_feed = []
+    
     simulate();
 } 
 
@@ -119,19 +136,25 @@ function simulate()
   var sim = [];
   
   var error = 0;
+  
+  var outside = 0;
+  var heatinput = 0;
+  var lac = 0;
+  var solar = 0;
+  var ref = 0;
+  
   for (var z=1; z<data.external_feed.length; z++)
   {
     var lasttime = data.external_feed[z-1][0];
     var time = data.external_feed[z][0];
-    var outside = data.external_feed[z][1];
     
     var step = (time - lasttime) / 1000.0;
 
-    if (data.external_feed[z][1]!=null) outside = data.external_feed[z][1];
-    if (data.power_feed[z][1]!=null) heatinput = data.power_feed[z][1];
-    if (data.lac_feed[z][1]!=null) lac = data.lac_feed[z][1];
-    if (data.solar_feed[z][1]!=null) solar = (settings.solarfactor * data.solar_feed[z][1]) + settings.solaroffset;
-    if (data.internal_feed[z][1]!=null) ref = data.internal_feed[z][1];
+    if (data.external_feed[z]!=undefined && data.external_feed[z][1]!=null) outside = data.external_feed[z][1];
+    if (data.power_feed[z]!=undefined && data.power_feed[z][1]!=null) heatinput = data.power_feed[z][1];
+    if (data.lac_feed[z]!=undefined && data.lac_feed[z][1]!=null) lac = data.lac_feed[z][1];
+    if (data.solar_feed[z]!=undefined && data.solar_feed[z][1]!=null) solar = (settings.solarfactor * data.solar_feed[z][1]) + settings.solaroffset;
+    if (data.internal_feed[z]!=undefined && data.internal_feed[z][1]!=null) ref = data.internal_feed[z][1];
     
     if (initial_external_temp==false && outside!=undefined) initial_external_temp = outside;
     if (initial_internal_temp==false && ref!=undefined) initial_internal_temp = ref;
@@ -263,9 +286,9 @@ $("#other_feeds_ok").click(function(){
   
   settings.other_feeds = [];
   
-  for (z in arr) {
-    for (i in feedlist) {
-      if (feedlist[i].id == arr[z]) {
+  for (var z in arr) {
+    for (var i in feeds) {
+      if (feeds[i].id == arr[z]) {
         settings.other_feeds.push(arr[z]);
       }
     }
@@ -287,9 +310,8 @@ $("#metabolic_ok").click(function(){
 
 $(".feed_selector").change(function(){
   var name = $(this).attr("name");
-  var index = $(this).val();
-  settings[name] = feedlist[index].id;
-  data[name] = feed.get_data(settings[name],view.start,view.end,view.interval);
+  settings[name] = $(this).val();
+  data[name] = feed.getdata(settings[name],view.start,view.end,view.interval);
   simulate();
 });
 
@@ -318,10 +340,14 @@ $("#auto_temp").click(function(){
 // Misc fn
 // ----------------------------------------------------------------------------------
 function draw_feed_selector(selected_feed) {
-    var out = "", selected = "";
-    for (z in feedlist) {
-      if (feedlist[z].id==selected_feed) selected = 'selected'; else selected = '';
-      if (feedlist[z].datatype==1) out += "<option value='"+z+"' "+selected+">"+feedlist[z].name+"</option>";
-    }
+    var out = ""; var selected = "";
+    for (var n in nodes) {
+      out += "<optgroup label='"+n+"'>";
+      for (var f in nodes[n]) {
+          if (nodes[n][f]['id']==selected_feed) selected = 'selected'; else selected = '';
+          out += "<option value="+nodes[n][f]['id']+" "+selected+">"+nodes[n][f].name+"</option>";
+      }
+      out += "</optgroup>";
+    }   
     return out;
 }
