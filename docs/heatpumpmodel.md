@@ -6,7 +6,7 @@ This model starts from the heat output that we want the heat pump to provide to 
 
 **1) Calculate the flow temperature required by the radiators to achieve the desired heat output.**
 
-See [radiator model](radiatormodel) for full explanation of the following equations:
+See [radiator model](radiatormodel.md) for full explanation of the following equations:
 
     Delta_T = ((Heat_output / Rated_Heat_Output) ^ 1/1.3 )  x Rated_Delta_T
     MWT = T_room + Delta_T
