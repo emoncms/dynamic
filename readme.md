@@ -12,9 +12,9 @@ Part of the OpenEnergyMonitor project:
 
 ### Documentation
 
-- [A simple dynamic building model](https://github.com/openenergymonitor/documentation/blob/master/BuildingBlocks/BuildingEnergyModelling/dynamicmodel.md)
-- [A simple radiator model](https://github.com/openenergymonitor/documentation/blob/master/BuildingBlocks/BuildingEnergyModelling/radiatormodel.md)
-- [A simple heatpump model](https://github.com/openenergymonitor/documentation/blob/master/BuildingBlocks/BuildingEnergyModelling/heatpumpmodel.md)
+- [A simple dynamic building model](docs/dynamicmodel.md)
+- [A simple radiator model](docs/radiatormodel.md)
+- [A simple heatpump model](docs/heatpumpmodel.md)
 
 ### Dynamic model based coheating test 
 
