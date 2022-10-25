@@ -35,8 +35,7 @@ if (settings==null) {
 
 view.start = settings.start
 view.end = settings.end
-view.npoints = 2000;
-view.calc_interval();
+view.calc_interval(2000);
 
 var segment = settings.segments;
 var $graph_bound = $('#graph_bound');
