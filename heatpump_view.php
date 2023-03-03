@@ -100,25 +100,25 @@ if (!isset($building)) $building = 1;
     plot();
   });
   
-  var occupancy_start_A = 7, occupancy_end_A = 9;
-  var occupancy_start_B = 18, occupancy_end_B = 23;
+  var occupancy_start_A = 0, occupancy_end_A = 0;
+  var occupancy_start_B = 16, occupancy_end_B = 24;
   
-  var heating_on_A = 6.5, heating_off_A = 10;
-  var heating_on_B = 17.5, heating_off_B = 23;
+  var heating_on_A = 0, heating_off_A = 0;
+  var heating_on_B = 10, heating_off_B = 24;
   
-  var setpoint = 18;
+  var setpoint = 20;
   var heateroutput = 2500;
   var hs = 0.4;
   
-  var externalmid = 10;
+  var externalmid = 6;
   var externalswing = 0;
   
-  var RatedPower = 1400;
-  var RatedDeltaT = 25;
+  var RatedPower = 15000;
+  var RatedDeltaT = 50;
   
-  var u1 = 130, k1 = 11000000, t1 = 10.0;
-  var u2 = 340, k2 = 2500000, t2 = 10.0;
-  var u3 = 712, k3 = 600000, t3 = 10.0;
+  var u1 = 300, k1 = 3600000*50, t1 = 10.0;
+  var u2 = 600, k2 = 3600000*10, t2 = 10.0;
+  var u3 = 1500, k3 = 3600000*1, t3 = 10.0;
   
   var wk = 1 / ((1/u1)+(1/u2)+(1/u3));
   
@@ -136,7 +136,12 @@ if (!isset($building)) $building = 1;
       count_hon = 0,
       count_sp = 0,
       count_hp = 0;
-   
+
+  ITerm = 0
+  error = 0  
+  
+  sim();
+  sim();
   sim();
   plot();
   
@@ -146,6 +151,7 @@ if (!isset($building)) $building = 1;
     outside_data = [];
     COP_data = []; 
     flowtemp_data = [];
+    heatoutput_data = [];
     
     var start_t1 = t1;
     
@@ -178,14 +184,36 @@ if (!isset($building)) $building = 1;
       var heatinput = 0;
       var Powerinput = 0;
       
+
+      
       // Heating schedule
       if ((hour>heating_on_A && hour<heating_off_A) || (hour>heating_on_B && hour<heating_off_B))
       {
-        if (t3>setpoint+(hs/2)) heating = false;
-        if (t3<setpoint-(hs/2)) heating = true;
+        //if (t3>setpoint+(hs/2)) heating = false;
+        //if (t3<setpoint-(hs/2)) heating = true;
         
+        heating = true;
         if (heating) {
-          heatinput = heateroutput;
+          // heatinput = heateroutput;
+          
+          Kp = 2000 // oscillation point divied in half
+          Ki = 0.20
+          Kd = 0
+          guard = 18000
+          
+          last_error = error
+          error = setpoint - t3
+          
+          delta_error = error - last_error
+          
+          PTerm = Kp * error
+          ITerm += error * timestep
+          if (ITerm>guard) ITerm = guard
+          if (ITerm<-guard) ITerm = -guard       
+          DTerm = delta_error / timestep
+          
+          heatinput = PTerm + (Ki*ITerm) + (Kd*DTerm)
+          if (heatinput>4500) heatinput = 4500
           
           // Radiator model
           var Delta_T = Math.pow(heatinput/RatedPower,1/1.3)*RatedDeltaT;
@@ -193,8 +221,8 @@ if (!isset($building)) $building = 1;
           flow_temperature = MWT + heatinput / (2 * 4186.0 * 0.1);
           
           // Really basic steady-state heatpump model
-          condencing = flow_temperature + 3;
-          refrigerant = outside - 3;
+          condencing = flow_temperature + 2;
+          refrigerant = outside - 6;
           IdealCOP = (condencing + 273) / ((condencing+273) - (refrigerant + 273));
           PracticalCOP = 0.5 *  IdealCOP;
           Powerinput =  heatinput /  PracticalCOP;
@@ -229,6 +257,7 @@ if (!isset($building)) $building = 1;
       outside_data.push([time,outside]);
       COP_data.push([time,PracticalCOP]);
       flowtemp_data.push([time,flow_temperature]);
+      heatoutput_data.push([time,heatinput]);
       end = time;
       
       sum_hp_power += Powerinput;
@@ -269,7 +298,7 @@ if (!isset($building)) $building = 1;
     var plot = $.plot($graph, [
       {data: graph_data, lines: { show: true, fill: false }},
       {data: outside_data, lines: { show: true, fill: false }},
-      {data: COP_data, yaxis: 2, lines: { show: true, fill: false }},
+      {data: heatoutput_data, yaxis: 2, lines: { show: true, fill: true }},
       {data: flowtemp_data, yaxis: 3, lines: { show: true, fill: false }}
     ], {
       grid: { show: true },
