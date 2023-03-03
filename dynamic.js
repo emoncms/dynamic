@@ -35,7 +35,7 @@ if (settings==null) {
 
 view.start = settings.start
 view.end = settings.end
-view.calc_interval(2000);
+view.calc_interval(6000);
 
 var segment = settings.segments;
 var $graph_bound = $('#graph_bound');
@@ -197,10 +197,10 @@ function simulate()
       {data: sim, lines: { show: true, fill: false, lineWidth: 3}, color: "rgba(0,0,0,1)"}
   ];
   
-  for (i in settings.other_feeds)
+  for (var ix in settings.other_feeds)
   {
-    var fdata = feed.getdata(settings.other_feeds[i],view.start,view.end,view.interval);
-    feeds.push({data: fdata, lines: { show: true, fill: false, lineWidth:linewidth}, color: "rgba(255,0,0,0.3)"});
+    // var fdata = feed.getdata(settings.other_feeds[i],view.start,view.end,view.interval);
+    // feeds.push({data: fdata, lines: { show: true, fill: false, lineWidth:linewidth}, color: "rgba(255,0,0,0.3)"});
   }
   
   var plot = $.plot($graph, feeds, {
@@ -209,13 +209,7 @@ function simulate()
     selection: { mode: "x" }
   });
   
-  $graph.bind("plotselected", function (event, ranges)
-  {
-      view.start = ranges.xaxis.from;
-      view.end = ranges.xaxis.to;
-      view.calc_interval()
-      load();
-  });
+
 
   $("#total_wk").html(total_wk.toFixed(0));
   $("#total_thermal_capacity").html(total_thermal_capacity);
@@ -226,14 +220,22 @@ function simulate()
 // Events
 // ----------------------------------------------------------------------------------
 
-$("#zoomout").click(function () {view.zoomout(); load();});
-$("#zoomin").click(function () {view.zoomin(); load();});
-$('#right').click(function () {view.panright(); load();});
-$('#left').click(function () {view.panleft(); load();});
-$('.graph-time').click(function () {view.timewindow($(this).attr("time")); load();});
+$("#zoomout").click(function () {view.zoomout(); view.calc_interval(6000); load();});
+$("#zoomin").click(function () {view.zoomin(); view.calc_interval(6000); load();});
+$('#right').click(function () {view.panright(); view.calc_interval(6000); load();});
+$('#left').click(function () {view.panleft(); view.calc_interval(6000); load();});
+$('.graph-time').click(function () {view.timewindow($(this).attr("time")); view.calc_interval(6000); load();});
 
 $("#simulate").click(function(){
   simulate();
+});
+
+$graph.bind("plotselected", function (event, ranges)
+{
+    view.start = ranges.xaxis.from;
+    view.end = ranges.xaxis.to;
+    view.calc_interval()
+    load();
 });
 
 $("#add-element").click(function(){

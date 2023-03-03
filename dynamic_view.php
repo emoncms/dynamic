@@ -8,4 +8,4 @@
 
 <?php echo file_get_contents("Modules/dynamic/dynamic_template.html"); ?>
 
-<script language="javascript" type="text/javascript" src="<?php echo $path; ?>Modules/dynamic/dynamic.js"></script>
+<script language="javascript" type="text/javascript" src="<?php echo $path; ?>Modules/dynamic/dynamic.js?v=2"></script>
