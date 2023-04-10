@@ -83,6 +83,9 @@ if (!isset($building)) $building = 1;
   <span class="add-on">W</span>
 </div>
 
+<div class="input-prepend input-append" style="margin-left:10px">
+  <button id="simulate" class="btn">Simulate</button>
+</div>
 <script id="source" language="javascript" type="text/javascript">
 
   var $graph_bound = $('#graph_bound');
@@ -106,9 +109,9 @@ if (!isset($building)) $building = 1;
   var heating_on_A = 0, heating_off_A = 0;
   var heating_on_B = 10, heating_off_B = 24;
   
-  var setpoint = 20;
+  var setpoint = 19;
   var heateroutput = 2500;
-  var hs = 0.4;
+  var hs = 0.1;
   
   var externalmid = 6;
   var externalswing = 0;
@@ -116,9 +119,9 @@ if (!isset($building)) $building = 1;
   var RatedPower = 15000;
   var RatedDeltaT = 50;
   
-  var u1 = 260, k1 = 3600000*6, t1 = 10.0;
-  var u2 = 600, k2 = 3600000*4, t2 = 10.0;
-  var u3 = 1000, k3 = 3600000*2.4, t3 = 10.0;
+  var u1 = 340, k1 = 3600000*8, t1 = 10.0;
+  var u2 = 650, k2 = 3600000*8, t2 = 10.0;
+  var u3 = 1000, k3 = 3600000*2.5, t3 = 10.0;
   
   var wk = 1 / ((1/u1)+(1/u2)+(1/u3));
   
@@ -139,6 +142,8 @@ if (!isset($building)) $building = 1;
 
   ITerm = 0
   error = 0  
+  
+  cycle_on = true;
   
   sim();
   sim();
@@ -187,7 +192,7 @@ if (!isset($building)) $building = 1;
 
       
       // Heating schedule
-      if ((hour>heating_on_A && hour<heating_off_A) || (hour>heating_on_B && hour<heating_off_B))
+      if ((hour>=heating_on_A && hour<heating_off_A) || (hour>=heating_on_B && hour<heating_off_B))
       {
         //if (t3>setpoint+(hs/2)) heating = false;
         //if (t3<setpoint-(hs/2)) heating = true;
@@ -195,6 +200,8 @@ if (!isset($building)) $building = 1;
         heating = true;
         if (heating) {
           // heatinput = heateroutput;
+          
+          // HEAT OUTPUT DRIVEN MODE
           
           Kp = 2000 // oscillation point divied in half
           Ki = 0.20
@@ -213,12 +220,22 @@ if (!isset($building)) $building = 1;
           DTerm = delta_error / timestep
           
           heatinput = PTerm + (Ki*ITerm) + (Kd*DTerm)
-          if (heatinput>4500) heatinput = 4500
+          if (heatinput>2500) heatinput = 2500
           
           // Radiator model
           var Delta_T = Math.pow(heatinput/RatedPower,1/1.3)*RatedDeltaT;
           var MWT = t3 + Delta_T;
           flow_temperature = MWT + heatinput / (2 * 4186.0 * 0.1);
+          
+          
+          /*
+          MWT = 33;
+          Delta_T = MWT - t3;
+          
+          heatinput = RatedPower * Math.pow(Delta_T / RatedDeltaT,1.3)
+          
+          flow_temperature = MWT + heatinput / (2 * 4186.0 * (12 / 60));
+          */
           
           // Really basic steady-state heatpump model
           condencing = flow_temperature + 2;
@@ -240,7 +257,9 @@ if (!isset($building)) $building = 1;
         sum_t3_sp += t3;
         count_sp ++;
       }
-      
+
+          heatinput += 320
+          
       h3 = heatinput - u3*(t3 - t2);
       h2 = u3*(t3 - t2) - u2*(t2 - t1);      
       h1 = u2*(t2 - t1) - u1*(t1 - outside);
@@ -296,10 +315,10 @@ if (!isset($building)) $building = 1;
   function plot()
   {
     var plot = $.plot($graph, [
-      {data: graph_data, lines: { show: true, fill: false }},
-      {data: outside_data, lines: { show: true, fill: false }},
-      {data: heatoutput_data, yaxis: 2, lines: { show: true, fill: true }},
-      {data: flowtemp_data, yaxis: 3, lines: { show: true, fill: false }}
+      {data: graph_data,  color:"#000", lines: { show: true, fill: false }},
+      {data: outside_data,  color:"#0000ff", lines: { show: true, fill: false }},
+      {data: heatoutput_data, color:"#ffcc00", yaxis: 2, lines: { show: true, fill: true }},
+      {data: flowtemp_data, color:"#ff0000", yaxis: 3, lines: { show: true, fill: false }}
     ], {
       grid: { show: true },
       xaxis: { mode: 'time', min: start, max: end },
@@ -333,6 +352,7 @@ if (!isset($building)) $building = 1;
     plot();
   });
   
+  $("#externalmid").val(externalmid);
   $("#externalmid").keyup(function()
   {
     externalmid = parseFloat($(this).val());
@@ -345,6 +365,11 @@ if (!isset($building)) $building = 1;
   {
     externalswing = parseFloat($(this).val());
     if (isNaN(externalswing)) externalswing = 0;
+    sim();
+    plot();
+  });
+  
+  $("#simulate").click(function(){
     sim();
     plot();
   });
