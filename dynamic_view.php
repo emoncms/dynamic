@@ -1,4 +1,7 @@
-<?php global $path; ?>
+<?php 
+defined('EMONCMS_EXEC') or die('Restricted access');
+global $path; 
+?>
 
 <script language="javascript" type="text/javascript" src="<?php echo $path;?>Lib/flot/jquery.flot.min.js"></script>
 <script language="javascript" type="text/javascript" src="<?php echo $path;?>Lib/flot/jquery.flot.time.min.js"></script>

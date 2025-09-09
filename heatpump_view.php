@@ -1,7 +1,7 @@
-<?php global $path; 
-
+<?php 
+defined('EMONCMS_EXEC') or die('Restricted access');
+global $path; 
 if (!isset($building)) $building = 1;
-
 ?>
 <!--[if IE]><script language="javascript" type="text/javascript" src="<?php echo $path;?>Lib/flot/excanvas.min.js"></script><![endif]-->
 <script language="javascript" type="text/javascript" src="<?php echo $path;?>Lib/flot/jquery.flot.js"></script>
